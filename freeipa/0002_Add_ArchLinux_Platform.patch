@@ -1,7 +1,7 @@
-diff -Nru freeipa-3.0.0.orig/ipapython/platform/archlinux.py freeipa-3.0.0/ipapython/platform/archlinux.py
---- freeipa-3.0.0.orig/ipapython/platform/archlinux.py	1969-12-31 19:00:00.000000000 -0500
-+++ freeipa-3.0.0/ipapython/platform/archlinux.py	2012-11-15 16:08:15.198170987 -0500
-@@ -0,0 +1,212 @@
+diff -Nru freeipa-3.0.1.orig/ipapython/platform/archlinux.py freeipa-3.0.1/ipapython/platform/archlinux.py
+--- freeipa-3.0.1.orig/ipapython/platform/archlinux.py	1969-12-31 19:00:00.000000000 -0500
++++ freeipa-3.0.1/ipapython/platform/archlinux.py	2012-11-16 17:19:49.251926000 -0500
+@@ -0,0 +1,260 @@
 +# Authors: Alexander Bokovoy <abokovoy@redhat.com>
 +#          Xiao-Long Chen <chenxiaolong@cxl.epac.to>
 +#
@@ -22,9 +22,13 @@ diff -Nru freeipa-3.0.0.orig/ipapython/platform/archlinux.py freeipa-3.0.0/ipapy
 +# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 +#
 +
-+from ipapython import ipautil
-+from ipapython.platform import base, redhat, systemd
 +import os
++import time
++
++from ipapython import ipautil, dogtag
++from ipapython.platform import base, redhat, systemd
++from ipapython.ipa_log_manager import root_logger
++from ipalib import api
 +
 +# All what we allow exporting directly from this module
 +# Everything else is made available through these symbols when they are
@@ -72,15 +76,16 @@ diff -Nru freeipa-3.0.0.orig/ipapython/platform/archlinux.py freeipa-3.0.0/ipapy
 +
 +class ArchLinuxService(systemd.SystemdService):
 +    def __init__(self, service_name):
++        systemd_name = service_name
 +        if service_name in system_units:
-+            service_name = system_units[service_name]
++            systemd_name = system_units[service_name]
 +        else:
 +            if len(service_name.split('.')) == 1:
 +                # if service_name does not have a dot, it is not foo.service
 +                # and not a foo.target. Thus, not correct service name for
 +                # systemd, default to foo.service style then
-+                service_name = "%s.service" % (service_name)
-+        super(ArchLinuxService, self).__init__(service_name)
++                systemd_name = "%s.service" % (service_name)
++        super(ArchLinuxService, self).__init__(service_name, systemd_name)
 +
 +# Special handling of directory server service
 +#
@@ -109,8 +114,8 @@ diff -Nru freeipa-3.0.0.orig/ipapython/platform/archlinux.py freeipa-3.0.0/ipapy
 +
 +    def restart(self, instance_name="", capture_output=True, wait=True):
 +        if len(instance_name) > 0:
-+            elements = self.service_name.split("@")
-+            srv_etc = os.path.join(self.SYSTEMD_ETC_PATH, self.service_name)
++            elements = self.systemd_name.split("@")
++            srv_etc = os.path.join(self.SYSTEMD_ETC_PATH, self.systemd_name)
 +            srv_tgt = os.path.join(self.SYSTEMD_ETC_PATH, self.SYSTEMD_SRV_TARGET % (elements[0]))
 +            srv_lnk = os.path.join(srv_tgt, self.service_instance(instance_name))
 +            if not os.path.exists(srv_etc):
@@ -133,6 +138,47 @@ diff -Nru freeipa-3.0.0.orig/ipapython/platform/archlinux.py freeipa-3.0.0/ipapy
 +    def get_config_dir(self, instance_name=""):
 +        return '/etc/ssh'
 +
++
++class ArchLinuxCAService(ArchLinuxService):
++    def __wait_until_running(self):
++        # We must not wait for the httpd proxy if httpd is not set up yet.
++        # Unfortunately, knownservices.httpd.is_installed() can return
++        # false positives, so check for existence of our configuration file.
++        # TODO: Use a cleaner solution
++        if not os.path.exists('/etc/httpd/conf/extra/ipa.conf'):
++            root_logger.debug(
++                'The httpd proxy is not installed, skipping wait for CA')
++            return
++        if dogtag.install_constants.DOGTAG_VERSION < 10:
++            # The server status information isn't available on DT 9
++            root_logger.debug('Using Dogtag 9, skipping wait for CA')
++            return
++        root_logger.debug('Waiting until the CA is running')
++        timeout = api.env.startup_timeout
++        op_timeout = time.time() + timeout
++        while time.time() < op_timeout:
++            status = dogtag.ca_status()
++            root_logger.debug('The CA status is: %s' % status)
++            if status == 'running':
++                break
++            root_logger.debug('Waiting for CA to start...')
++            time.sleep(1)
++        else:
++            raise RuntimeError('CA did not start in %ss' % timeout)
++
++    def start(self, instance_name="", capture_output=True, wait=True):
++        super(ArchLinuxCAService, self).start(
++            instance_name, capture_output=capture_output, wait=wait)
++        if wait:
++            self.__wait_until_running()
++
++    def restart(self, instance_name="", capture_output=True, wait=True):
++        super(ArchLinuxCAService, self).restart(
++            instance_name, capture_output=capture_output, wait=wait)
++        if wait:
++            self.__wait_until_running()
++
++
 +# Redirect directory server service through special sub-class due to its
 +# special handling of instances
 +def archlinux_service(name):
@@ -142,6 +188,8 @@ diff -Nru freeipa-3.0.0.orig/ipapython/platform/archlinux.py freeipa-3.0.0/ipapy
 +        return ArchLinuxIPAService(name)
 +    if name == 'sshd':
 +        return ArchLinuxSSHService(name)
++    if name in ('pki-cad', 'pki_cad', 'pki-tomcatd', 'pki_tomcatd'):
++        return ArchLinuxCAService(name)
 +    return ArchLinuxService(name)
 +
 +class ArchLinuxAuthConfig(base.AuthConfig):
