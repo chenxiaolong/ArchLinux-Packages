@@ -409,7 +409,7 @@ package_freeipa-client() {
            'autofs'
            'bind'
            'certmonger'
-           'curl'
+           'curl-gssapi'
            'cyrus-sasl-gssapi'
            'krb5'
            'nfs-utils'
