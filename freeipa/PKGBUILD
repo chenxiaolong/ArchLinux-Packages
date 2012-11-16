@@ -28,7 +28,7 @@ if [ "x${build_server}" == "xtrue" ]; then
 fi
 
 pkgver=3.0.1
-pkgrel=1
+pkgrel=2
 pkgdesc="The Identity, Policy, and Audit system"
 arch=('i686' 'x86_64')
 url="http://www.freeipa.org/"
@@ -101,7 +101,7 @@ sha512sums=('4a83b5e738ffc9d9c56622ca532f5672ec9abcd46180dea78bd4dcee2c3eac8a9ae
             '6a44b76f0767dc406b86af88817c7a05380df79e914998880daa1c6b3643698a46d1703d6fd4aee58b9e20cb6f05a96f18e7069e8eabb09d128cc786e91c8d24'
             '5182d7a9d25f920c3591bf037dd7ad92bf912db55dc9ac5f1e3fc557c19658515a51270e396aa2614dd7f047b7351cfe281519dc3524f953b495cf9164f836a2'
             'cf9b40b305a004342c40695b635a9eadead90c41197d24c3b96658dc5e992c1748ac3f0262e0c5353e7ddaa3fb2db96143fcd3a6ca7ab34cd737c0d52fad00d6'
-            '07f6d1be2552cc968f57d9b9c43871eab32ec096d675d440483d3d5fc7026c341a69e8d15ea45b49cede2061e95da23298c54c944763828f38e2d6dcb5c31989'
+            'ae93857dc42f6afb3ec67623b14d3294ad3a21f2ad21e60e245f41ce9fc3ff927ea1820f0783f6f4a5c5bf87d05c3c590fbb441f8dd411bab88be0a29c759897'
             '81bbcc2d567b6b154a1bb436c37ad0efb6e104aa9a651d24545eeb0f4889f15424aa805d2b7460faad2a8804fe2ec59fce64360cd9f61f0ac3f14fb5772c350b'
             '8c83d37c8c1c6184f6eafd3f1ae09bf5fd999123e81cdd4b54f902d691b6d1a88ad9614521b411b2da00486978a7a01a2e0bd5156dd13b18afbd713416080a80'
             'ba832413135fb1fad2c3fdcbef945e54c3004aa072eb2309ed5dafa5284644bd367b5814188dbb97bd3d995eedc955ee555464533038857e8862b472167586be'
@@ -253,6 +253,9 @@ build() {
   fi
 
   install -dm755 "${srcdir}/install_temp/var/lib/ipa-client/sysrestore/"
+
+  # /etc/ipa/ is needed for ipa-client-install
+  install -dm755 "${srcdir}/install_temp/etc/ipa/"
 
   # Fix filenames
   pushd "${srcdir}/install_temp/usr/lib/python2.7/site-packages/"

@@ -25,3 +25,4 @@
 
 # Other directories ############################################################
 /var/lib/ipa-client/sysrestore/
+/etc/ipa/
