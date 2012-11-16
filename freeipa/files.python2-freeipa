@@ -64,7 +64,7 @@
 /usr/lib/python2.7/site-packages/ipalib/text.py
 /usr/lib/python2.7/site-packages/ipalib/util.py
 /usr/lib/python2.7/site-packages/ipalib/x509.py
-/usr/lib/python2.7/site-packages/ipapython-3.0.0-py2.7.egg-info
+/usr/lib/python2.7/site-packages/ipapython-3.0.1GIT2a5839b-py2.7.egg-info
 /usr/lib/python2.7/site-packages/ipapython/admintool.py
 /usr/lib/python2.7/site-packages/ipapython/certdb.py
 /usr/lib/python2.7/site-packages/ipapython/certmonger.py
@@ -80,6 +80,7 @@
 /usr/lib/python2.7/site-packages/ipapython/kernel_keyring.py
 /usr/lib/python2.7/site-packages/ipapython/log_manager.py
 /usr/lib/python2.7/site-packages/ipapython/nsslib.py
+/usr/lib/python2.7/site-packages/ipapython/platform/archlinux.py
 /usr/lib/python2.7/site-packages/ipapython/platform/base.py
 /usr/lib/python2.7/site-packages/ipapython/platform/fedora16.py
 /usr/lib/python2.7/site-packages/ipapython/platform/__init__.py

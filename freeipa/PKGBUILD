@@ -27,7 +27,7 @@ if [ "x${build_server}" == "xtrue" ]; then
   fi
 fi
 
-pkgver=3.0.0
+pkgver=3.0.1
 pkgrel=1
 pkgdesc="The Identity, Policy, and Audit system"
 arch=('i686' 'x86_64')
@@ -93,29 +93,23 @@ source=("http://www.freeipa.org/downloads/src/freeipa-${pkgver}.tar.gz"
         'files.freeipa-admintools'
         'files.freeipa-client'
         'files.python2-freeipa'
-        '0001-Use-TLS-for-CA-replication.patch'
         '0001_Use_ArchLinux_Paths.patch'
         '0002_Add_ArchLinux_Platform.patch'
-        '0003_Use_Python_2.patch')
-sha512sums=('cefae3cd90c27023bbe816fce67bdc6c4110fe14b62cb489dab4c5c8abc1f05d48d88c56fdee07bbf3bd61be0f3781370e50c58475d3ffa2e2b88ed6b7655792'
+        '0003_Use_Python_2.patch'
+        '0004_NTP_Fixes.patch')
+sha512sums=('4a83b5e738ffc9d9c56622ca532f5672ec9abcd46180dea78bd4dcee2c3eac8a9aed07ea04674899462ae82fb11988aa28755dea1ec9955d480a5dbad03b95af'
             '6a44b76f0767dc406b86af88817c7a05380df79e914998880daa1c6b3643698a46d1703d6fd4aee58b9e20cb6f05a96f18e7069e8eabb09d128cc786e91c8d24'
             '5182d7a9d25f920c3591bf037dd7ad92bf912db55dc9ac5f1e3fc557c19658515a51270e396aa2614dd7f047b7351cfe281519dc3524f953b495cf9164f836a2'
             'cf9b40b305a004342c40695b635a9eadead90c41197d24c3b96658dc5e992c1748ac3f0262e0c5353e7ddaa3fb2db96143fcd3a6ca7ab34cd737c0d52fad00d6'
             '07f6d1be2552cc968f57d9b9c43871eab32ec096d675d440483d3d5fc7026c341a69e8d15ea45b49cede2061e95da23298c54c944763828f38e2d6dcb5c31989'
-            '58d4dda3f9ee17d8b171d7b20a2f350e915ce42e7b3cc7e949d57e3d465bcaa2a345b6877b26014544c464e337ea875b9031547ab79ec847d38da5832ef6d9e6'
-            '7edab7426952149dbdf6176f0e2dc28d0967bf7ab0c0f567ee31fb5d850e1bc32d2716d5d4db009ed7551546f22c73f313b610b0d18106ad40ccd73188715821'
-            '4ebb0db51979a4b9439c4bf9f14b09d014983895a292d6ff1ee41b18851c9e1814f641b69ea6a82112c75413fc0fb2a7d1a4dc89abd4bfe1f5b1f9eb3e6bee28'
+            '9a1617112e6babf8c94691cd0556b1879514ad75f94b9d60e140800f3fd2fe5ed7c4510dcfee7c853b4abb350029f6e6835d49dad0c6ab94e9baa9c2b54aef74'
+            '8c83d37c8c1c6184f6eafd3f1ae09bf5fd999123e81cdd4b54f902d691b6d1a88ad9614521b411b2da00486978a7a01a2e0bd5156dd13b18afbd713416080a80'
             '58e5054f64be2b24ba4be83b5b53c351ee7da539124395eb874947491386e6b82266123f91bcdeaf7ecba75b5e2aa5d5ecf70f4c0a45d5738f69a5fc94cbfa83'
-            'dd762c4355eac9afd36525ee203cd298cce476ef10f5e0bc75a6d4f994aab88cb5c7377dc58b07179f231ae02e03e1ba02295eb030bfd0dbb778899ef524a76f')
+            'dd762c4355eac9afd36525ee203cd298cce476ef10f5e0bc75a6d4f994aab88cb5c7377dc58b07179f231ae02e03e1ba02295eb030bfd0dbb778899ef524a76f'
+            'ccc2c1f216ec85e85b9e17dffcc6fa88a31b3d3a319bdf9154705a7e619311ed3c9dc8e2b704d8a1366b79d92d660ad29a7c3554751f46b5a08c4e911a27fe8d')
 
 build() {
   cd "${srcdir}/${pkgbase}-${pkgver}"
-
-  # Apply Fedora's patches
-  # 0001-Use-TLS-for-CA-replication.patch:
-  #   Use TLS encryption when replicating ceritificate authorities
-  #   https://fedorahosted.org/freeipa/ticket/3162
-  patch -p1 -i "${srcdir}/0001-Use-TLS-for-CA-replication.patch"
 
   # Apply my patches
   # 0001_Use_ArchLinux_Paths.patch
@@ -130,6 +124,10 @@ build() {
   #   FreeIPA hasn't been ported to Python 3, so the code must be modified to
   #   run /usr/bin/python2
   patch -p1 -i "${srcdir}/0003_Use_Python_2.patch"
+  # 0004_NTP_Fixes.patch
+  #   Arch Linux's ntp does not accept the '-U' parameter and does not have a
+  #   /etc/sysconfig/ configuration files, so the relevant code must be removed
+  patch -p1 -i "${srcdir}/0004_NTP_Fixes.patch"
 
   export SUPPORTED_PLATFORM=archlinux
   export PYTHON=python2
@@ -254,9 +252,6 @@ build() {
     install -m644 ipa-compliance.cron "${srcdir}/etc/cron.d/ipa-compliance"
   fi
 
-  install -dm755 "${srcdir}/install_temp/etc/ipa/"
-  touch "${srcdir}/install_temp/etc/ipa/default.conf"
-  touch "${srcdir}/install_temp/etc/ipa/ca.crt"
   install -dm755 "${srcdir}/install_temp/var/lib/ipa-client/sysrestore/"
 }
 
@@ -445,3 +440,13 @@ package_python2-freeipa() {
 }
 
 # vim:set ts=2 sw=2 et:
+sha512sums=('4a83b5e738ffc9d9c56622ca532f5672ec9abcd46180dea78bd4dcee2c3eac8a9aed07ea04674899462ae82fb11988aa28755dea1ec9955d480a5dbad03b95af'
+            '6a44b76f0767dc406b86af88817c7a05380df79e914998880daa1c6b3643698a46d1703d6fd4aee58b9e20cb6f05a96f18e7069e8eabb09d128cc786e91c8d24'
+            '5182d7a9d25f920c3591bf037dd7ad92bf912db55dc9ac5f1e3fc557c19658515a51270e396aa2614dd7f047b7351cfe281519dc3524f953b495cf9164f836a2'
+            'cf9b40b305a004342c40695b635a9eadead90c41197d24c3b96658dc5e992c1748ac3f0262e0c5353e7ddaa3fb2db96143fcd3a6ca7ab34cd737c0d52fad00d6'
+            '07f6d1be2552cc968f57d9b9c43871eab32ec096d675d440483d3d5fc7026c341a69e8d15ea45b49cede2061e95da23298c54c944763828f38e2d6dcb5c31989'
+            'ab2aaea26d884ee1de51ab397d4c1823cb98acbdea9845761e3d4baa03d98c8a815b73dea03d7d9d4852d1930bacdcffcadef9da191163a02ab1eab8dc481ef8'
+            '8c83d37c8c1c6184f6eafd3f1ae09bf5fd999123e81cdd4b54f902d691b6d1a88ad9614521b411b2da00486978a7a01a2e0bd5156dd13b18afbd713416080a80'
+            '58e5054f64be2b24ba4be83b5b53c351ee7da539124395eb874947491386e6b82266123f91bcdeaf7ecba75b5e2aa5d5ecf70f4c0a45d5738f69a5fc94cbfa83'
+            'dd762c4355eac9afd36525ee203cd298cce476ef10f5e0bc75a6d4f994aab88cb5c7377dc58b07179f231ae02e03e1ba02295eb030bfd0dbb778899ef524a76f'
+            'ccc2c1f216ec85e85b9e17dffcc6fa88a31b3d3a319bdf9154705a7e619311ed3c9dc8e2b704d8a1366b79d92d660ad29a7c3554751f46b5a08c4e911a27fe8d')
