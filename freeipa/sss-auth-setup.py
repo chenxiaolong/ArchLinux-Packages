@@ -249,8 +249,8 @@ def parse_arguments():
   arg_parser = argparse.ArgumentParser()
   arg_parser.formatter_class = argparse.RawDescriptionHelpFormatter
   arg_parser.description = textwrap.dedent("""
-  Arch Linux FreeIPA authentication setup helper for PAM and NSS
-  --------------------------------------------------------------
+  Arch Linux sssd authentication setup helper for PAM and NSS
+  -----------------------------------------------------------
   """)
 
   nss_group = arg_parser.add_mutually_exclusive_group()
