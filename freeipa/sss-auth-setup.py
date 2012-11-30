@@ -9,8 +9,7 @@ import os
 import re
 import shutil
 
-nss_databases = ['passwd', 'shadow', 'group', 'services', 'netgroup',
-                 'automount']
+nss_databases = ['passwd', 'group', 'services', 'netgroup', 'automount']
 
 def nss_enable_sss():
   if os.path.exists("/etc/nsswitch.conf.sss_tmp"):
