@@ -88,6 +88,7 @@ checkdepends=('check')
 
 options=('!libtool')
 source=("http://www.freeipa.org/downloads/src/freeipa-${pkgver}.tar.gz"
+        'sss-auth-setup.py'
         'files.freeipa-server'
         'files.freeipa-server-selinux'
         'files.freeipa-admintools'
@@ -99,6 +100,7 @@ source=("http://www.freeipa.org/downloads/src/freeipa-${pkgver}.tar.gz"
         '0004_NTP_Fixes.patch'
         '0005_ntpdate_path.patch')
 sha512sums=('4a83b5e738ffc9d9c56622ca532f5672ec9abcd46180dea78bd4dcee2c3eac8a9aed07ea04674899462ae82fb11988aa28755dea1ec9955d480a5dbad03b95af'
+            '093262eca08275409c515a7c04d0c1fd7c95f81758d2375c2768a4d39aaa71680999341e7c177fd0e22c2ae09f8f0d9b83925ed8ee1a0d713020490e6fee1e5d'
             '6a44b76f0767dc406b86af88817c7a05380df79e914998880daa1c6b3643698a46d1703d6fd4aee58b9e20cb6f05a96f18e7069e8eabb09d128cc786e91c8d24'
             '5182d7a9d25f920c3591bf037dd7ad92bf912db55dc9ac5f1e3fc557c19658515a51270e396aa2614dd7f047b7351cfe281519dc3524f953b495cf9164f836a2'
             'cf9b40b305a004342c40695b635a9eadead90c41197d24c3b96658dc5e992c1748ac3f0262e0c5353e7ddaa3fb2db96143fcd3a6ca7ab34cd737c0d52fad00d6'
@@ -434,6 +436,10 @@ package_freeipa-client() {
   #depends+=('authconfig')
 
   install_files freeipa-client
+
+  install -dm755 "${pkgdir}/usr/sbin/"
+  install -m755 "${srcdir}/sss-auth-setup.py" \
+                "${pkgdir}/usr/sbin/sss-auth-setup"
 }
 
 package_python2-freeipa() {
