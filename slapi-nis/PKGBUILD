@@ -1,0 +1,38 @@
+# Maintainer: Xiao-Long Chen <chenxiaolong@cxl.epac.to>
+
+pkgname=slapi-nis
+pkgver=0.46
+pkgrel=1
+pkgdesc="NIS Server and Schema Compatibility plugins for Directory Server"
+arch=('i686' 'x86_64')
+url="http://slapi-nis.fedorahosted.org/"
+license=('GPL')
+depends=('389-ds-base' 'libtirpc' 'nspr' 'nss' 'openldap' 'tcp_wrappers')
+options=('!libtool')
+source=("https://fedorahosted.org/releases/s/l/slapi-nis/slapi-nis-${pkgver}.tar.gz")
+sha512sums=('f5dfa3435e0f12d65f22e45c92cd49f1e51e17b49c264871e75ab5a9d0fe4624846fc8d0919ace9f3be75a7737177faf2c6705ae540b8c4df6d25f8c25610ad0')
+
+build() {
+  cd "${srcdir}/${pkgname}-${pkgver}"
+
+  ./configure \
+    --prefix=/usr \
+    --disable-static \
+    --with-tcp-wrappers \
+    --with-ldap=openldap
+
+  make
+}
+
+check() {
+  cd "${srcdir}/${pkgname}-${pkgver}"
+  # 389 needs to be running for this to work
+  #make check
+}
+
+package() {
+  cd "${srcdir}/${pkgname}-${pkgver}"
+  make DESTDIR="${pkgdir}/" install
+}
+
+# vim:set ts=2 sw=2 et:
