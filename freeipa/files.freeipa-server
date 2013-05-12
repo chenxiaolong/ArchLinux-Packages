@@ -56,6 +56,7 @@
 /usr/lib/ipa/certmonger/restart_pkicad
 
 # Data files (okay, here we go...) #############################################
+/usr/share/ipa/ui/js/plugins/
 /usr/share/ipa/wsgi.py
 
 # LDAP ldif and uldif files ####################################################
@@ -354,6 +355,9 @@
 /usr/lib/python2.7/site-packages/ipaserver/plugins/xmlserver.py
 /usr/lib/python2.7/site-packages/ipaserver/rpcserver.py
 
+# Python 2 files in /usr/share/
+######################/usr/share/ipa/copy-schema-to-ca.py
+
 # Dirsrv plugins
 /usr/lib/dirsrv/plugins/libipa_cldap.so
 /usr/lib/dirsrv/plugins/libipa_enrollment_extop.so
@@ -371,6 +375,7 @@
 # Other directories
 0700:/var/lib/ipa/sysrestore/
 0700:/var/lib/ipa/sysupgrade/
+/var/lib/ipa/backup/
 /var/lib/ipa/pki-ca/publish/
 0700:/var/cache/ipa/sessions/
 

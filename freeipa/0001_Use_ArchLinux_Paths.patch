@@ -1,28 +1,36 @@
-diff -Nru freeipa-3.0.1.orig/install/conf/ca_renewal freeipa-3.0.1/install/conf/ca_renewal
---- freeipa-3.0.1.orig/install/conf/ca_renewal	2012-11-16 16:16:18.751841000 -0500
-+++ freeipa-3.0.1/install/conf/ca_renewal	2012-11-16 16:16:42.500238000 -0500
+--- a/init/systemd/ipa_memcached.service
++++ b/init/systemd/ipa_memcached.service
+@@ -4,7 +4,7 @@
+ 
+ [Service]
+ Type=forking
+-EnvironmentFile=/etc/sysconfig/ipa_memcached
++EnvironmentFile=/etc/conf.d/ipa_memcached.conf
+ PIDFile=/var/run/ipa_memcached/ipa_memcached.pid
+ ExecStart=/usr/bin/memcached -d -s $SOCKET_PATH -u $USER -m $CACHESIZE -c $MAXCONN -P /var/run/ipa_memcached/ipa_memcached.pid $OPTIONS
+ 
+--- a/install/conf/ca_renewal
++++ b/install/conf/ca_renewal
 @@ -3,4 +3,4 @@
  id=dogtag-ipa-retrieve-agent-submit
  ca_is_default=0
  ca_type=EXTERNAL
 -ca_external_helper=/usr/libexec/certmonger/dogtag-ipa-retrieve-agent-submit
 +ca_external_helper=/usr/lib/certmonger/certmonger/dogtag-ipa-retrieve-agent-submit
-diff -Nru freeipa-3.0.1.orig/install/conf/ipa.conf freeipa-3.0.1/install/conf/ipa.conf
---- freeipa-3.0.1.orig/install/conf/ipa.conf	2012-11-16 16:16:18.752270000 -0500
-+++ freeipa-3.0.1/install/conf/ipa.conf	2012-11-16 16:16:50.913588000 -0500
-@@ -24,7 +24,7 @@
- 
+--- a/install/conf/ipa.conf
++++ b/install/conf/ipa.conf
+@@ -36,7 +36,7 @@
+ FileETag None
  
  # FIXME: WSGISocketPrefix is a server-scope directive.  The mod_wsgi package
 -# should really be fixed by adding this its /etc/httpd/conf.d/wsgi.conf:
 +# should really be fixed by adding this its /etc/httpd/conf/extra/wsgi.conf:
- WSGISocketPrefix /var/run/httpd/wsgi
+ WSGISocketPrefix /run/httpd/wsgi
  
  
-diff -Nru freeipa-3.0.1.orig/install/tools/ipa-upgradeconfig freeipa-3.0.1/install/tools/ipa-upgradeconfig
---- freeipa-3.0.1.orig/install/tools/ipa-upgradeconfig	2012-11-16 16:16:18.622128000 -0500
-+++ freeipa-3.0.1/install/tools/ipa-upgradeconfig	2012-11-16 16:17:36.270716000 -0500
-@@ -117,7 +117,7 @@
+--- a/install/tools/ipa-upgradeconfig
++++ b/install/tools/ipa-upgradeconfig
+@@ -111,7 +111,7 @@
  
  def find_hostname():
      """Find the hostname currently configured in ipa-rewrite.conf"""
@@ -31,7 +39,7 @@ diff -Nru freeipa-3.0.1.orig/install/tools/ipa-upgradeconfig freeipa-3.0.1/insta
  
      if not ipautil.file_exists(filename):
          return None
-@@ -140,7 +140,7 @@
+@@ -134,7 +134,7 @@
  
      Returns True if autoredirect is enabled, False otherwise
      """
@@ -40,9 +48,9 @@ diff -Nru freeipa-3.0.1.orig/install/tools/ipa-upgradeconfig freeipa-3.0.1/insta
      if os.path.exists(filename):
          pattern = "^RewriteRule \^/\$ https://%s/ipa/ui \[L,NC,R=301\]" % fqdn
          p = re.compile(pattern)
-@@ -626,9 +626,9 @@
-                                          '=')
-         sub_dict['CLONE']='#' if crl.lower() == 'true' else ''
+@@ -904,9 +904,9 @@
+     certmap_dir = dsinstance.config_dirname(
+         dsinstance.realm_to_serverid(api.env.realm))
  
 -    upgrade(sub_dict, "/etc/httpd/conf.d/ipa.conf", ipautil.SHARE_DIR + "ipa.conf")
 -    upgrade(sub_dict, "/etc/httpd/conf.d/ipa-rewrite.conf", ipautil.SHARE_DIR + "ipa-rewrite.conf")
@@ -50,12 +58,11 @@ diff -Nru freeipa-3.0.1.orig/install/tools/ipa-upgradeconfig freeipa-3.0.1/insta
 +    upgrade(sub_dict, "/etc/httpd/conf/extra/ipa.conf", ipautil.SHARE_DIR + "ipa.conf")
 +    upgrade(sub_dict, "/etc/httpd/conf/extra/ipa-rewrite.conf", ipautil.SHARE_DIR + "ipa-rewrite.conf")
 +    upgrade(sub_dict, "/etc/httpd/conf/extra/ipa-pki-proxy.conf", ipautil.SHARE_DIR + "ipa-pki-proxy.conf", add=True)
+     upgrade(sub_dict, os.path.join(certmap_dir, "certmap.conf"),
+         os.path.join(ipautil.SHARE_DIR, "certmap.conf.template"))
      upgrade_pki(ca, fstore)
-     update_dbmodules(api.env.realm)
-     uninstall_ipa_kpasswd()
-diff -Nru freeipa-3.0.1.orig/install/tools/man/ipa-upgradeconfig.8 freeipa-3.0.1/install/tools/man/ipa-upgradeconfig.8
---- freeipa-3.0.1.orig/install/tools/man/ipa-upgradeconfig.8	2012-11-16 16:16:18.609474000 -0500
-+++ freeipa-3.0.1/install/tools/man/ipa-upgradeconfig.8	2012-11-16 16:17:52.593384000 -0500
+--- a/install/tools/man/ipa-upgradeconfig.8
++++ b/install/tools/man/ipa-upgradeconfig.8
 @@ -24,7 +24,7 @@
  .SH "DESCRIPTION"
  A tool to update the IPA Apache configuration during an upgrade.
@@ -65,10 +72,35 @@ diff -Nru freeipa-3.0.1.orig/install/tools/man/ipa-upgradeconfig.8 freeipa-3.0.1
  
  It also will convert a CA configured to be accessible via ports 9443, 9444, 9445 and 9446 to be proxied by the IPA web server on ports 80 and 443.
  
-diff -Nru freeipa-3.0.1.orig/ipa-client/ipa-install/ipa-client-install freeipa-3.0.1/ipa-client/ipa-install/ipa-client-install
---- freeipa-3.0.1.orig/ipa-client/ipa-install/ipa-client-install	2012-11-16 16:16:19.338614000 -0500
-+++ freeipa-3.0.1/ipa-client/ipa-install/ipa-client-install	2012-11-16 16:18:04.763569000 -0500
-@@ -512,7 +512,7 @@
+--- a/ipa-client/ipaclient/ntpconf.py
++++ b/ipa-client/ipaclient/ntpconf.py
+@@ -99,7 +99,7 @@
+ def config_ntp(server_fqdn, fstore = None, sysstore = None):
+     path_step_tickers = "/etc/ntp/step-tickers"
+     path_ntp_conf = "/etc/ntp.conf"
+-    path_ntp_sysconfig = "/etc/sysconfig/ntpd"
++    path_ntp_sysconfig = "/etc/conf.d/ntpd.conf"
+     sub_dict = { }
+     sub_dict["SERVER"] = server_fqdn
+ 
+--- a/ipa-client/ipa-install/ipa-client-automount
++++ b/ipa-client/ipa-install/ipa-client-automount
+@@ -39,10 +39,10 @@
+ from ipapython.dn import DN
+ from ipapython import services as ipaservices
+ 
+-AUTOFS_CONF = '/etc/sysconfig/autofs'
++AUTOFS_CONF = '/etc/conf.d/autofs'
+ NSSWITCH_CONF = '/etc/nsswitch.conf'
+ AUTOFS_LDAP_AUTH = '/etc/autofs_ldap_auth.conf'
+-NFS_CONF = '/etc/sysconfig/nfs'
++NFS_CONF = '/etc/conf.d/nfs'
+ IDMAPD_CONF = '/etc/idmapd.conf'
+ 
+ def parse_options():
+--- a/ipa-client/ipa-install/ipa-client-install
++++ b/ipa-client/ipa-install/ipa-client-install
+@@ -602,7 +602,7 @@
              # to this version but not unenrolled/enrolled again
              # In such case it is OK to fail
              restored = fstore.restore_file("/etc/ntp.conf")
@@ -77,9 +109,39 @@ diff -Nru freeipa-3.0.1.orig/ipa-client/ipa-install/ipa-client-install freeipa-3
              if ntp_step_tickers:
                 restored |= fstore.restore_file("/etc/ntp/step-tickers")
          except Exception:
-diff -Nru freeipa-3.0.1.orig/ipapython/certmonger.py freeipa-3.0.1/ipapython/certmonger.py
---- freeipa-3.0.1.orig/ipapython/certmonger.py	2012-11-16 16:16:18.543827000 -0500
-+++ freeipa-3.0.1/ipapython/certmonger.py	2012-11-16 16:18:25.888178000 -0500
+--- a/ipa-client/man/ipa-client-automount.1
++++ b/ipa-client/man/ipa-client-automount.1
+@@ -29,7 +29,7 @@
+ .IP  o
+ /etc/nsswitch.conf
+ .IP  o
+-/etc/sysconfig/autofs
++/etc/conf.d/autofs
+ .IP  o
+ /etc/autofs_ldap_auth.conf
+ 
+@@ -79,7 +79,7 @@
+ .TP
+ Files that will be configured when using the ldap automount client:
+ 
+-/etc/sysconfig/autofs
++/etc/conf.d/autofs
+ 
+ /etc/autofs_ldap_auth.conf
+ 
+--- a/ipa-client/man/ipa-client-install.1
++++ b/ipa-client/man/ipa-client-install.1
+@@ -177,7 +177,7 @@
+ Files replaced if NTP is enabled:
+ 
+ /etc/ntp.conf\p
+-/etc/sysconfig/ntpd\p
++/etc/conf.d/ntpd.conf\p
+ /etc/ntp/step\-tickers\p
+ .TP
+ Files always created (replacing existing content):
+--- a/ipapython/certmonger.py
++++ b/ipapython/certmonger.py
 @@ -298,7 +298,7 @@
      If the hostname we were passed to use in ipa-client-install doesn't
      match the value of gethostname() then we need to append
@@ -89,24 +151,36 @@ diff -Nru freeipa-3.0.1.orig/ipapython/certmonger.py freeipa-3.0.1/ipapython/cer
  
      We also need to restore this on uninstall.
  
-diff -Nru freeipa-3.0.1.orig/ipapython/platform/systemd.py freeipa-3.0.1/ipapython/platform/systemd.py
---- freeipa-3.0.1.orig/ipapython/platform/systemd.py	2012-11-16 16:16:18.540089000 -0500
-+++ freeipa-3.0.1/ipapython/platform/systemd.py	2012-11-16 16:19:24.926587000 -0500
-@@ -90,11 +90,11 @@
+--- a/ipapython/platform/base/systemd.py
++++ b/ipapython/platform/base/systemd.py
+@@ -27,7 +27,7 @@
+ 
+ class SystemdService(base.PlatformService):
+     SYSTEMD_ETC_PATH = "/etc/systemd/system/"
+-    SYSTEMD_LIB_PATH = "/lib/systemd/system/"
++    SYSTEMD_LIB_PATH = "/usr/lib/systemd/system/"
+     SYSTEMD_SRV_TARGET = "%s.target.wants"
+ 
+     def __init__(self, service_name, systemd_name):
+@@ -93,7 +93,7 @@
              ipautil.wait_for_open_ports('localhost', ports, api.env.startup_timeout)
  
      def stop(self, instance_name="", capture_output=True):
 -        ipautil.run(["/bin/systemctl", "stop", self.service_instance(instance_name)], capture_output=capture_output)
 +        ipautil.run(["/usr/bin/systemctl", "stop", self.service_instance(instance_name)], capture_output=capture_output)
-         super(SystemdService, self).stop(instance_name)
+         if 'context' in api.env and api.env.context in ['ipactl', 'installer']:
+             update_service_list = True
+         else:
+@@ -101,7 +101,7 @@
+         super(SystemdService, self).stop(instance_name,update_service_list=update_service_list)
  
      def start(self, instance_name="", capture_output=True, wait=True):
 -        ipautil.run(["/bin/systemctl", "start", self.service_instance(instance_name)], capture_output=capture_output)
 +        ipautil.run(["/usr/bin/systemctl", "start", self.service_instance(instance_name)], capture_output=capture_output)
-         if wait and self.is_running(instance_name):
-             self.__wait_for_open_ports(self.service_instance(instance_name))
-         super(SystemdService, self).start(instance_name)
-@@ -102,14 +102,14 @@
+         if 'context' in api.env and api.env.context in ['ipactl', 'installer']:
+             update_service_list = True
+         else:
+@@ -113,14 +113,14 @@
      def restart(self, instance_name="", capture_output=True, wait=True):
          # Restart command is broken before systemd-36-3.fc16
          # If you have older systemd version, restart of dependent services will hang systemd indefinetly
@@ -123,7 +197,7 @@ diff -Nru freeipa-3.0.1.orig/ipapython/platform/systemd.py freeipa-3.0.1/ipapyth
              if rcode != 0:
                  ret = False
          except ipautil.CalledProcessError:
-@@ -119,7 +119,7 @@
+@@ -130,7 +130,7 @@
      def is_installed(self):
          installed = True
          try:
@@ -132,7 +206,7 @@ diff -Nru freeipa-3.0.1.orig/ipapython/platform/systemd.py freeipa-3.0.1/ipapyth
              if rcode != 0:
                  installed = False
              else:
-@@ -134,7 +134,7 @@
+@@ -145,7 +145,7 @@
      def is_enabled(self, instance_name=""):
          enabled = True
          try:
@@ -141,7 +215,7 @@ diff -Nru freeipa-3.0.1.orig/ipapython/platform/systemd.py freeipa-3.0.1/ipapyth
              if rcode != 0:
                  enabled = False
          except ipautil.CalledProcessError, e:
-@@ -179,7 +179,7 @@
+@@ -190,7 +190,7 @@
                          # Link exists and it is broken, make new one
                          os.unlink(srv_lnk)
                          os.symlink(self.lib_path, srv_lnk)
@@ -150,7 +224,7 @@ diff -Nru freeipa-3.0.1.orig/ipapython/platform/systemd.py freeipa-3.0.1/ipapyth
              except:
                  pass
          else:
-@@ -197,7 +197,7 @@
+@@ -208,7 +208,7 @@
                  if ipautil.dir_exists(srv_tgt):
                      if os.path.islink(srv_lnk):
                          os.unlink(srv_lnk)
@@ -159,7 +233,7 @@ diff -Nru freeipa-3.0.1.orig/ipapython/platform/systemd.py freeipa-3.0.1/ipapyth
              except:
                  pass
          else:
-@@ -205,13 +205,13 @@
+@@ -216,13 +216,13 @@
  
      def __enable(self, instance_name=""):
          try:
@@ -175,23 +249,21 @@ diff -Nru freeipa-3.0.1.orig/ipapython/platform/systemd.py freeipa-3.0.1/ipapyth
          except ipautil.CalledProcessError, e:
              pass
  
-diff -Nru freeipa-3.0.1.orig/ipaserver/install/cainstance.py freeipa-3.0.1/ipaserver/install/cainstance.py
---- freeipa-3.0.1.orig/ipaserver/install/cainstance.py	2012-11-16 16:16:19.312810000 -0500
-+++ freeipa-3.0.1/ipaserver/install/cainstance.py	2012-11-16 16:19:54.509756000 -0500
-@@ -59,7 +59,7 @@
- from ipalib import util
+--- a/ipaserver/install/cainstance.py
++++ b/ipaserver/install/cainstance.py
+@@ -56,7 +56,7 @@
+ from ipaserver.plugins import ldap2
  from ipapython.ipa_log_manager import *
  
 -HTTPD_CONFD = "/etc/httpd/conf.d/"
 +HTTPD_CONFD = "/etc/httpd/conf/extra/"
- DEFAULT_DSPORT=7389
+ DEFAULT_DSPORT = dogtag.install_constants.DS_PORT
  
  PKI_USER = "pkiuser"
-diff -Nru freeipa-3.0.1.orig/ipaserver/install/httpinstance.py freeipa-3.0.1/ipaserver/install/httpinstance.py
---- freeipa-3.0.1.orig/ipaserver/install/httpinstance.py	2012-11-16 16:16:19.312567000 -0500
-+++ freeipa-3.0.1/ipaserver/install/httpinstance.py	2012-11-16 16:20:57.194581000 -0500
+--- a/ipaserver/install/httpinstance.py
++++ b/ipaserver/install/httpinstance.py
 @@ -35,8 +35,8 @@
- from ipalib import util, api
+ from ipalib import api
  
  HTTPD_DIR = "/etc/httpd"
 -SSL_CONF = HTTPD_DIR + "/conf.d/ssl.conf"
@@ -201,8 +273,17 @@ diff -Nru freeipa-3.0.1.orig/ipaserver/install/httpinstance.py freeipa-3.0.1/ipa
  
  selinux_warning = """
  WARNING: could not set selinux boolean(s) %(var)s to true.  The web
-@@ -190,17 +190,17 @@
-         installutils.remove_file('/tmp/krb5cc_%d' % pent.pw_uid)
+@@ -197,7 +197,7 @@
+     def configure_httpd_ccache(self):
+         pent = pwd.getpwnam("apache")
+         ccache = '/tmp/krb5cc_%d' % pent.pw_uid
+-        filepath = '/etc/sysconfig/httpd'
++        filepath = '/etc/conf.d/apache'
+         if not os.path.exists(filepath):
+             # file doesn't exist; create it with correct ownership & mode
+             open(filepath, 'a').close()
+@@ -211,17 +211,17 @@
+         ipaservices.restore_context(filepath)
  
      def __configure_http(self):
 -        target_fname = '/etc/httpd/conf.d/ipa.conf'
@@ -223,7 +304,7 @@ diff -Nru freeipa-3.0.1.orig/ipaserver/install/httpinstance.py freeipa-3.0.1/ipa
          http_fd = open(target_fname, "w")
          http_fd.write(http_txt)
          http_fd.close()
-@@ -228,8 +228,8 @@
+@@ -249,8 +249,8 @@
  
      def __add_include(self):
          """This should run after __set_mod_nss_port so is already backed up"""
@@ -233,8 +314,8 @@ diff -Nru freeipa-3.0.1.orig/ipaserver/install/httpinstance.py freeipa-3.0.1/ipa
 +            print "Adding Include conf/extra/ipa-rewrite to %s failed." % NSS_CONF
  
      def __setup_ssl(self):
-         fqdn = None
-@@ -370,7 +370,7 @@
+         fqdn = self.fqdn
+@@ -385,7 +385,7 @@
          if not enabled is None and not enabled:
              self.disable()
  
@@ -243,7 +324,7 @@ diff -Nru freeipa-3.0.1.orig/ipaserver/install/httpinstance.py freeipa-3.0.1/ipa
              try:
                  self.fstore.restore_file(f)
              except ValueError, error:
-@@ -378,9 +378,9 @@
+@@ -393,9 +393,9 @@
                  pass
  
          # Remove the configuration files we create
@@ -256,3 +337,58 @@ diff -Nru freeipa-3.0.1.orig/ipaserver/install/httpinstance.py freeipa-3.0.1/ipa
  
          for var in ["httpd_can_network_connect", "httpd_manage_ipa"]:
              sebool_state = self.restore_state(var)
+--- a/ipaserver/install/ipa_backup.py
++++ b/ipaserver/install/ipa_backup.py
+@@ -127,7 +127,7 @@
+         '/etc/sysconfig/pki-ca',
+         '/etc/sysconfig/pki-tomcat',
+         '/etc/sysconfig/dirsrv',
+-        '/etc/sysconfig/ntpd',
++        '/etc/conf.d/ntpd.conf',
+         '/etc/sysconfig/krb5kdc',
+         '/etc/sysconfig/pki/ca/pki-ca',
+         '/etc/sysconfig/authconfig',
+@@ -141,10 +141,10 @@
+         '/etc/security/limits.conf',
+         '/etc/httpd/conf/password.conf',
+         '/etc/httpd/conf/ipa.keytab',
+-        '/etc/httpd/conf.d/ipa-pki-proxy.conf',
+-        '/etc/httpd/conf.d/ipa-rewrite.conf',
+-        '/etc/httpd/conf.d/nss.conf',
+-        '/etc/httpd/conf.d/ipa.conf',
++        '/etc/httpd/conf/extra/ipa-pki-proxy.conf',
++        '/etc/httpd/conf/extra/ipa-rewrite.conf',
++        '/etc/httpd/conf/extra/nss.conf',
++        '/etc/httpd/conf/extra/ipa.conf',
+         '/etc/ssh/sshd_config',
+         '/etc/ssh/ssh_config',
+         '/etc/krb5.conf',
+--- a/ipaserver/install/ntpinstance.py
++++ b/ipaserver/install/ntpinstance.py
+@@ -35,7 +35,7 @@
+     def __write_config(self):
+ 
+         self.fstore.backup_file("/etc/ntp.conf")
+-        self.fstore.backup_file("/etc/sysconfig/ntpd")
++        self.fstore.backup_file("/etc/conf.d/ntpd.conf")
+ 
+         # We use the OS variable to point it towards either the rhel
+         # or fedora pools. Other distros should be added in the future
+@@ -99,7 +99,7 @@
+         #read in memory, find OPTIONS, check/change it, then overwrite file
+         needopts = [ {'val':'-x', 'need':True},
+                      {'val':'-g', 'need':True} ]
+-        fd = open("/etc/sysconfig/ntpd", "r")
++        fd = open("/etc/conf.d/ntpd.conf", "r")
+         lines = fd.readlines()
+         fd.close()
+         for line in lines:
+@@ -118,7 +118,7 @@
+ 
+         done = False
+         if newopts:
+-            fd = open("/etc/sysconfig/ntpd", "w")
++            fd = open("/etc/conf.d/ntpd.conf", "w")
+             for line in lines:
+                 if not done:
+                     sline = line.strip()
