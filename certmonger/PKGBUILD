@@ -5,7 +5,7 @@ run_tests=false
 
 pkgname=certmonger
 pkgver=0.67
-pkgrel=1
+pkgrel=2
 pkgdesc="Certificate status monitor and PKI enrollment client"
 arch=('i686' 'x86_64')
 url="http://certmonger.fedorahosted.org"
@@ -32,6 +32,7 @@ build() {
   ./configure \
     --prefix=/usr \
     --sysconfdir=/etc \
+    --sbindir=/usr/bin \
     --libexecdir=/usr/lib/${pkgname} \
     --localstatedir=/var \
     --enable-systemd \
