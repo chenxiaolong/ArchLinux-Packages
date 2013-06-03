@@ -2,7 +2,7 @@
 
 pkgname=slapi-nis
 pkgver=0.46
-pkgrel=1
+pkgrel=2
 pkgdesc="NIS Server and Schema Compatibility plugins for Directory Server"
 arch=('i686' 'x86_64')
 url="http://slapi-nis.fedorahosted.org/"
@@ -17,6 +17,7 @@ build() {
 
   ./configure \
     --prefix=/usr \
+    --sbindir=/usr/bin \
     --disable-static \
     --with-tcp-wrappers \
     --with-ldap=openldap
