@@ -1,4 +1,23 @@
---- a/ipapython/platform/archlinux/__init__.py
+From 5d78b9364c98435b5f3ee54a27c6c9294366c476 Mon Sep 17 00:00:00 2001
+From: Xiao-Long Chen <chenxiaolong@cxl.epac.to>
+Date: Wed, 16 Apr 2014 19:32:33 -0400
+Subject: [PATCH 2/7] Add Arch Linux Platform
+
+---
+ ipapython/platform/archlinux/__init__.py | 40 ++++++++++++++++++++++++++++++++
+ ipapython/platform/archlinux/auth.py     | 17 ++++++++++++++
+ ipapython/platform/fedora16/service.py   |  8 +++----
+ ipapython/platform/fedora18/__init__.py  |  2 +-
+ ipapython/setup.py                       |  1 +
+ ipapython/setup.py.in                    |  1 +
+ 6 files changed, 64 insertions(+), 5 deletions(-)
+ create mode 100644 ipapython/platform/archlinux/__init__.py
+ create mode 100644 ipapython/platform/archlinux/auth.py
+
+diff --git a/ipapython/platform/archlinux/__init__.py b/ipapython/platform/archlinux/__init__.py
+new file mode 100644
+index 0000000..2b77bcc
+--- /dev/null
 +++ b/ipapython/platform/archlinux/__init__.py
 @@ -0,0 +1,40 @@
 +import os
@@ -41,7 +60,10 @@
 +backup_and_replace_hostname = fedora18.backup_and_replace_hostname
 +restore_context = fedora18.restore_context
 +check_selinux_status = fedora18.check_selinux_status
---- a/ipapython/platform/archlinux/auth.py
+diff --git a/ipapython/platform/archlinux/auth.py b/ipapython/platform/archlinux/auth.py
+new file mode 100644
+index 0000000..67ee063
+--- /dev/null
 +++ b/ipapython/platform/archlinux/auth.py
 @@ -0,0 +1,17 @@
 +from ipapython.platform import base
@@ -61,9 +83,11 @@
 +
 +    def execute(self):
 +        raise NotImplementedError
+diff --git a/ipapython/platform/fedora16/service.py b/ipapython/platform/fedora16/service.py
+index edf2d7f..7523761 100644
 --- a/ipapython/platform/fedora16/service.py
 +++ b/ipapython/platform/fedora16/service.py
-@@ -32,8 +32,8 @@
+@@ -32,8 +32,8 @@ from ipalib import api
  # mapping will be kept in this dictionary
  system_units = dict(map(lambda x: (x, "%s.service" % (x)), base.wellknownservices))
  
@@ -74,7 +98,7 @@
  
  # Rewrite dirsrv and pki-tomcatd services as they support instances via separate
  # service generator. To make this working, one needs to have both foo@.servic
-@@ -144,8 +144,8 @@
+@@ -144,8 +144,8 @@ class Fedora16CAService(Fedora16Service):
          # false positives, so check for existence of our configuration file.
          # TODO: Use a cleaner solution
          use_proxy = True
@@ -85,9 +109,11 @@
              root_logger.debug(
                  'The httpd proxy is not installed, wait on local port')
              use_proxy = False
+diff --git a/ipapython/platform/fedora18/__init__.py b/ipapython/platform/fedora18/__init__.py
+index d12bdca..2ac882c 100644
 --- a/ipapython/platform/fedora18/__init__.py
 +++ b/ipapython/platform/fedora18/__init__.py
-@@ -52,7 +52,7 @@
+@@ -52,7 +52,7 @@ timedate_services = list(base.timedate_services)
  def backup_and_replace_hostname(fstore, statestore, hostname):
      old_hostname = socket.gethostname()
      try:
@@ -96,9 +122,11 @@
      except ipautil.CalledProcessError, e:
          print >>sys.stderr, "Failed to set this machine hostname to %s (%s)." % (hostname, str(e))
  
+diff --git a/ipapython/setup.py b/ipapython/setup.py
+index cb24eee..cffbf6e 100644
 --- a/ipapython/setup.py
 +++ b/ipapython/setup.py
-@@ -68,6 +68,7 @@
+@@ -68,6 +68,7 @@ def setup_package():
              packages = [ "ipapython",
                           "ipapython.platform",
                           "ipapython.platform.base",
@@ -106,9 +134,11 @@
                           "ipapython.platform.fedora16",
                           "ipapython.platform.fedora18",
                           "ipapython.platform.redhat" ],
+diff --git a/ipapython/setup.py.in b/ipapython/setup.py.in
+index d3bbcaf..c7c6845 100644
 --- a/ipapython/setup.py.in
 +++ b/ipapython/setup.py.in
-@@ -68,6 +68,7 @@
+@@ -68,6 +68,7 @@ def setup_package():
              packages = [ "ipapython",
                           "ipapython.platform",
                           "ipapython.platform.base",
@@ -116,3 +146,6 @@
                           "ipapython.platform.fedora16",
                           "ipapython.platform.fedora18",
                           "ipapython.platform.redhat" ],
+-- 
+1.9.2
+
