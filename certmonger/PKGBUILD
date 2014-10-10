@@ -16,8 +16,7 @@ backup=(etc/certmonger/certmonger.conf
         etc/tmpfiles.d/certmonger.conf)
 install=${pkgname}.install
 source=("http://fedorahosted.org/released/certmonger/certmonger-${pkgver}.tar.gz")
-sha512sums=('0d9c021131fad02a2eca4e5cb3dcf9cbf83fbb103cafd4e71febe3a621e579b7fa274d38b68f3300c28e56a349e40d07da0ded0ebde73db3c0d738db855b4309'
-            '0139a4584fcf4e93b5092d9d521e1a701ffbe6974ad7651b1bdb852a5223532f88fc178da5136181ba22a8698e6961541d0bf5a83f2711bd78fc2a2ebf5f784b')
+sha512sums=('0d9c021131fad02a2eca4e5cb3dcf9cbf83fbb103cafd4e71febe3a621e579b7fa274d38b68f3300c28e56a349e40d07da0ded0ebde73db3c0d738db855b4309')
 
 build() {
   cd "${pkgname}-${pkgver}"
