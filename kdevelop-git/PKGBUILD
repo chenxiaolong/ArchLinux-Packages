@@ -1,0 +1,50 @@
+# Maintainer: Xiao-Long Chen <chenxiaolong@cxl.epac.to>
+# Contributor: Jakub Schmidtke <sjakub-at-gmail-dot-com>
+# Contributor: mosra <mosra@centrum.cz>
+
+pkgname=kdevelop-git
+pkgver=v4.7.0.r352.g08515a2
+pkgrel=1
+epoch=1
+pkgdesc="A C/C++ development environment for KDE - Git build"
+arch=(i686 x86_64)
+url="http://www.kdevelop.org/"
+license=(GPL)
+groups=(kde)
+depends=(kdevplatform-git plasma-framework qt5-tools)
+makedepends=(cmake git)
+optdepends=('kdesdk-okteta: hex editor'
+            'kdebase-konsole: embedded terminal'
+            'git: git support'
+            'gdb: gdb support'
+            'qt4-doc: qt4 documentation integration'
+            'qt5-doc: qt5 documentation integration')
+provides=(kdevelop)
+conflicts=(kdevelop)
+install='kdevelop.install'
+source=(git+git://anongit.kde.org/kdevelop)
+sha512sums=('SKIP')
+
+pkgver() {
+  cd kdevelop
+  git describe --long | sed -r 's/([^-]*-g)/r\1/;s/-/./g'
+}
+
+build() {
+  mkdir -p build
+  cd build
+
+  cmake ../kdevelop \
+    -DCMAKE_INSTALL_PREFIX=/usr \
+    -DLIB_INSTALL_DIR=lib \
+    -DKDE_INSTALL_USE_QT_SYS_PATHS=ON \
+    -DCMAKE_BUILD_TYPE=Release
+
+  make
+}
+
+package() {
+  cd build
+
+  make DESTDIR="${pkgdir}" install
+}
