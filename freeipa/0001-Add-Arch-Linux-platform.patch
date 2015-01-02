@@ -1,0 +1,301 @@
+From 6cca16d24a83fd96d32af47eb4f498cfcee99ac1 Mon Sep 17 00:00:00 2001
+From: Xiao-Long Chen <chenxiaolong@cxl.epac.to>
+Date: Wed, 16 Apr 2014 19:31:08 -0400
+Subject: [PATCH 1/4] Add Arch Linux platform
+
+---
+ ipaplatform/archlinux/__init__.py | 22 +++++++++
+ ipaplatform/archlinux/paths.py    | 36 +++++++++++++++
+ ipaplatform/archlinux/services.py | 97 +++++++++++++++++++++++++++++++++++++++
+ ipaplatform/archlinux/tasks.py    | 53 +++++++++++++++++++++
+ ipaplatform/base/paths.py         |  1 +
+ ipaplatform/setup.py.in           |  1 +
+ ipaserver/install/ntpinstance.py  |  5 ++
+ 7 files changed, 215 insertions(+)
+ create mode 100644 ipaplatform/archlinux/__init__.py
+ create mode 100644 ipaplatform/archlinux/paths.py
+ create mode 100644 ipaplatform/archlinux/services.py
+ create mode 100644 ipaplatform/archlinux/tasks.py
+
+diff --git a/ipaplatform/archlinux/__init__.py b/ipaplatform/archlinux/__init__.py
+new file mode 100644
+index 0000000..c1e957e
+--- /dev/null
++++ b/ipaplatform/archlinux/__init__.py
+@@ -0,0 +1,22 @@
++# Authors:
++#   Xiao-Long Chen <chenxiaolong@cxl.epac.to>
++#
++# Copyright (C) 2014  Red Hat
++# see file 'COPYING' for use and warranty information
++#
++# This program is free software; you can redistribute it and/or modify
++# it under the terms of the GNU General Public License as published by
++# the Free Software Foundation, either version 3 of the License, or
++# (at your option) any later version.
++#
++# This program is distributed in the hope that it will be useful,
++# but WITHOUT ANY WARRANTY; without even the implied warranty of
++# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++# GNU General Public License for more details.
++#
++# You should have received a copy of the GNU General Public License
++# along with this program.  If not, see <http://www.gnu.org/licenses/>.
++
++'''
++This module contains Arch Linux specific platform files.
++'''
+diff --git a/ipaplatform/archlinux/paths.py b/ipaplatform/archlinux/paths.py
+new file mode 100644
+index 0000000..869f006
+--- /dev/null
++++ b/ipaplatform/archlinux/paths.py
+@@ -0,0 +1,36 @@
++# Authors:
++#   Xiao-Long Chen <chenxiaolong@cxl.epac.to>
++#
++# Copyright (C) 2014  Red Hat
++# see file 'COPYING' for use and warranty information
++#
++# This program is free software; you can redistribute it and/or modify
++# it under the terms of the GNU General Public License as published by
++# the Free Software Foundation, either version 3 of the License, or
++# (at your option) any later version.
++#
++# This program is distributed in the hope that it will be useful,
++# but WITHOUT ANY WARRANTY; without even the implied warranty of
++# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++# GNU General Public License for more details.
++#
++# You should have received a copy of the GNU General Public License
++# along with this program.  If not, see <http://www.gnu.org/licenses/>.
++
++'''
++This Arch Linux base platform module exports default filesystem paths as
++ommon in Arch Linux-based systems.
++'''
++
++# Fallback to default path definitions
++from ipaplatform.base.paths import BasePathNamespace
++
++
++class ArchLinuxPathNamespace(BasePathNamespace):
++    AUTOFS_LDAP_AUTH_CONF = "/etc/autofs/autofs_ldap_auth.conf"
++    SYSCONFIG_AUTOFS = "/etc/default/autofs"
++    SYSCONFIG_NFS = "/etc/conf.d/nfs-common.conf"
++    CHROMIUM_BROWSER = "/usr/bin/chromium"
++
++
++paths = ArchLinuxPathNamespace()
+diff --git a/ipaplatform/archlinux/services.py b/ipaplatform/archlinux/services.py
+new file mode 100644
+index 0000000..56f6ea3
+--- /dev/null
++++ b/ipaplatform/archlinux/services.py
+@@ -0,0 +1,97 @@
++# Author: Alexander Bokovoy <abokovoy@redhat.com>
++#         Tomas Babej <tbabej@redhat.com>
++#         Xiao-Long Chen <chenxiaolong@cxl.epac.to>
++#
++# Copyright (C) 2011-2014   Red Hat
++# see file 'COPYING' for use and warranty information
++#
++# This program is free software; you can redistribute it and/or modify
++# it under the terms of the GNU General Public License as published by
++# the Free Software Foundation, either version 3 of the License, or
++# (at your option) any later version.
++#
++# This program is distributed in the hope that it will be useful,
++# but WITHOUT ANY WARRANTY; without even the implied warranty of
++# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.    See the
++# GNU General Public License for more details.
++#
++# You should have received a copy of the GNU General Public License
++# along with this program.  If not, see <http://www.gnu.org/licenses/>.
++#
++
++"""
++Contains Arch Linux-specific service class implementations.
++"""
++
++import os
++import time
++
++from ipaplatform.tasks import tasks
++from ipaplatform.base import services as base_services
++
++from ipapython import ipautil, dogtag
++from ipapython.ipa_log_manager import root_logger
++from ipalib import api
++from ipaplatform.paths import paths
++
++# Mappings from service names as FreeIPA code references to these services
++# to their actual systemd service names
++
++# For beginning just remap names to add .service
++# As more services will migrate to systemd, unit names will deviate and
++# mapping will be kept in this dictionary
++archlinux_system_units = dict((x, "%s.service" % x)
++                              for x in base_services.wellknownservices)
++
++archlinux_system_units['rpcgssd'] = 'rpc-gssd.service'
++archlinux_system_units['rpcidmapd'] = 'rpc-idmapd.service'
++
++
++# Service classes that implement Arch Linux-specific behaviour
++
++class ArchLinuxService(base_services.SystemdService):
++    system_units = archlinux_system_units
++
++    def __init__(self, service_name):
++        systemd_name = service_name
++        if service_name in self.system_units:
++            systemd_name = self.system_units[service_name]
++        else:
++            if '.' not in service_name:
++                # if service_name does not have a dot, it is not foo.service
++                # and not a foo.target. Thus, not correct service name for
++                # systemd, default to foo.service style then
++                systemd_name = "%s.service" % (service_name)
++        super(ArchLinuxService, self).__init__(service_name, systemd_name)
++
++
++class ArchLinuxSSHService(ArchLinuxService):
++    def get_config_dir(self, instance_name=""):
++        return '/etc/ssh'
++
++
++def archlinux_service_class_factory(name):
++    if name == 'sshd':
++        return ArchLinuxSSHService(name)
++    return ArchLinuxService(name)
++
++
++# Magicdict containing ArchLinuxService instances.
++
++class ArchLinuxServices(base_services.KnownServices):
++    def service_class_factory(self, name):
++        return archlinux_service_class_factory(name)
++
++    def __init__(self):
++        services = dict()
++        for s in base_services.wellknownservices:
++            services[s] = self.service_class_factory(s)
++        # Call base class constructor. This will lock services to read-only
++        super(ArchLinuxServices, self).__init__(services)
++
++
++# Objects below are expected to be exported by platform module
++
++from ipaplatform.base.services import timedate_services
++service = archlinux_service_class_factory
++knownservices = ArchLinuxServices()
+diff --git a/ipaplatform/archlinux/tasks.py b/ipaplatform/archlinux/tasks.py
+new file mode 100644
+index 0000000..667b594
+--- /dev/null
++++ b/ipaplatform/archlinux/tasks.py
+@@ -0,0 +1,53 @@
++# Authors:
++#   Xiao-Long Chen <chenxiaolong@cxl.epac.to>
++#
++# Copyright (C) 2014 Xiao-Long Chen
++# see file 'COPYING' for use and warranty information
++#
++# This program is free software; you can redistribute it and/or modify
++# it under the terms of the GNU General Public License as published by
++# the Free Software Foundation, either version 3 of the License, or
++# (at your option) any later version.
++#
++# This program is distributed in the hope that it will be useful,
++# but WITHOUT ANY WARRANTY; without even the implied warranty of
++# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++# GNU General Public License for more details.
++#
++# You should have received a copy of the GNU General Public License
++# along with this program.  If not, see <http://www.gnu.org/licenses/>.
++
++'''
++This module contains default Arch Linux-specific implementations of system
++tasks.
++'''
++
++from ipaplatform.redhat.tasks import RedHatTaskNamespace
++
++
++class ArchLinuxTaskNamespace(RedHatTaskNamespace):
++
++    def restore_pre_ipa_client_configuration(self, fstore, statestore,
++                                             was_sssd_installed,
++                                             was_sssd_configured):
++        return True
++
++    def set_nisdomain(self, nisdomain):
++        return True
++
++    def modify_nsswitch_pam_stack(self, sssd, mkhomedir, statestore):
++        return True
++
++    def modify_pam_to_use_krb5(self, statestore):
++        return True
++
++    def insert_ca_certs_into_systemwide_ca_store(self, ca_certs):
++        return True
++
++    def remove_ca_certs_from_systemwide_ca_store(self):
++        return True
++
++    def restore_network_configuration(self, fstore, statestore):
++        return True
++
++tasks = ArchLinuxTaskNamespace()
+diff --git a/ipaplatform/base/paths.py b/ipaplatform/base/paths.py
+index c4cdc58..ea5f6dd 100644
+--- a/ipaplatform/base/paths.py
++++ b/ipaplatform/base/paths.py
+@@ -41,6 +41,7 @@ class BasePathNamespace(object):
+     ETC_DIRSRV_SLAPD_INSTANCE_TEMPLATE = "/etc/dirsrv/slapd-%s"
+     ETC_SLAPD_PKI_IPA_DIR = "/etc/dirsrv/slapd-PKI-IPA"
+     ETC_FEDORA_RELEASE = "/etc/fedora-release"
++    ETC_ARCH_RELEASE = "/etc/arch-release"
+     GROUP = "/etc/group"
+     ETC_HOSTNAME = "/etc/hostname"
+     HOSTS = "/etc/hosts"
+diff --git a/ipaplatform/setup.py.in b/ipaplatform/setup.py.in
+index 944e686..e67faa2 100644
+--- a/ipaplatform/setup.py.in
++++ b/ipaplatform/setup.py.in
+@@ -67,6 +67,7 @@ def setup_package():
+             package_dir = {'ipaplatform': ''},
+             packages = ["ipaplatform",
+                         "ipaplatform.base",
++                        "ipaplatform.archlinux",
+                         "ipaplatform.fedora",
+                         "ipaplatform.redhat",
+                         "ipaplatform.rhel"],
+diff --git a/ipaserver/install/ntpinstance.py b/ipaserver/install/ntpinstance.py
+index c653525..2f8622d 100644
+--- a/ipaserver/install/ntpinstance.py
++++ b/ipaserver/install/ntpinstance.py
+@@ -46,6 +46,8 @@ class NTPInstance(service.Service):
+             os = "fedora"
+         elif ipautil.file_exists(paths.ETC_REDHAT_RELEASE):
+             os = "rhel"
++        elif ipautil.file_exists(paths.ETC_ARCH_RELEASE):
++            os = "archlinux"
+ 
+         srv_vals = []
+         srv_vals.append("0.%s.pool.ntp.org" % os)
+@@ -97,6 +99,9 @@ class NTPInstance(service.Service):
+                 fd.write("fudge 127.127.1.0 stratum 10\n")
+             fd.close()
+ 
++        if os == 'archlinux':
++            return
++
+         #read in memory, find OPTIONS, check/change it, then overwrite file
+         needopts = [ {'val':'-x', 'need':True},
+                      {'val':'-g', 'need':True} ]
+-- 
+2.2.1
+
