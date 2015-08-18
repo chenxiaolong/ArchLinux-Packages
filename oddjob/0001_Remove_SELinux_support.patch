@@ -334,8 +334,8 @@ diff -Nru oddjob-0.31.2.orig/src/oddjob_dbus.c oddjob-0.31.2/src/oddjob_dbus.c
  static void
  oddjob_dbus_message_set_selinux_context(struct oddjob_dbus_message *msg,
 diff -Nru oddjob-0.31.2.orig/src/oddjobd.c oddjob-0.31.2/src/oddjobd.c
---- oddjob-0.31.2.orig/src/oddjobd.c	2012-11-12 13:36:56.512893317 -0500
-+++ oddjob-0.31.2/src/oddjobd.c	2012-11-12 13:37:01.539561092 -0500
+--- oddjob-0.31.2.orig/src/oddjobd.c.orig	2015-06-24 00:26:11.000000000 -0600
++++ oddjob-0.31.2/src/oddjobd.c	2015-08-03 20:13:11.713609378 -0600
 @@ -48,11 +48,6 @@
  #include <unistd.h>
  #include <dbus/dbus.h>
@@ -626,7 +626,7 @@ diff -Nru oddjob-0.31.2.orig/src/oddjobd.c oddjob-0.31.2/src/oddjobd.c
  		} else {
  			if (globals.debug) {
  				fprintf(stderr, "unknown attribute \"%s\" in "
-@@ -1392,12 +1170,6 @@
+@@ -1392,13 +1170,6 @@
  	while (acl != NULL) {
  		tofree = acl;
  		acl = acl->next;
@@ -635,11 +635,12 @@ diff -Nru oddjob-0.31.2.orig/src/oddjobd.c oddjob-0.31.2/src/oddjobd.c
 -		oddjob_free(tofree->selinux_user);
 -		oddjob_free(tofree->selinux_role);
 -		oddjob_free(tofree->selinux_type);
+-		oddjob_free(tofree->selinux_range);
 -#endif
  		oddjob_free(tofree->user);
  		oddjob_free(tofree);
  	}
-@@ -1943,50 +1715,6 @@
+@@ -1944,50 +1715,6 @@
  		putenv(task->interface);
  		putenv(task->method);
  		putenv(task->calling_user);
