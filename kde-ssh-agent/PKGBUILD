@@ -1,0 +1,24 @@
+pkgname=kde-ssh-agent
+pkgver=1
+pkgrel=1
+pkgdesc="Fedora's ssh-agent systemd user service for KDE sessions"
+arch=(any)
+url="https://src.fedoraproject.org/"
+# https://fedoraproject.org/wiki/Licensing:Main#License_of_Fedora_SPEC_Files
+license=('MIT')
+depends=(openssh systemd)
+source=('https://src.fedoraproject.org/rpms/openssh/raw/bdde8987e397b73f9ebe4bc2ed7ada91e270bb03/f/ssh-agent.service'
+        'https://src.fedoraproject.org/rpms/plasma-workspace/raw/6e8b3baf55369a0d67d815b6afb00c3dc7d0b8f1/f/ssh-agent.conf'
+        'https://src.fedoraproject.org/rpms/kde-settings/raw/4e0b7992d6ac6317975d9321db149eda695c5f0a/f/ssh-agent.sh')
+sha512sums=('1e0ab1f8cb867106ca605f9558fee463163d73921b01cc9edafbe65d6715323788c0a585bade7c21ab4e61181732964b94edfc1eca46056050a9029d755aed79'
+            'bba1e34d297d91bca08abe6a8fe97c8e3f719a6767f39a28bd0e5a02762e9bbd332cd92d719f3c613aad60302bfbd1b90f49eb5e88f066356438e890023816ee'
+            '08619ee4ecc82868d94cb3bc02bb6f380f052a92bbe29492395b43abda59348763a64151557203d0f82e31ed714dab03aa874c6cc4c8b517d22332ea508ef245')
+
+package() {
+    install -Dpm644 ssh-agent.service \
+        "${pkgdir}"/usr/lib/systemd/user/ssh-agent.service
+    install -Dpm644 ssh-agent.conf \
+        "${pkgdir}"/usr/lib/systemd/user/plasma-core.target.d/ssh-agent.conf
+    install -Dpm644 ssh-agent.sh \
+        "${pkgdir}"/etc/xdg/plasma-workspace/env/ssh-agent.sh
+}
