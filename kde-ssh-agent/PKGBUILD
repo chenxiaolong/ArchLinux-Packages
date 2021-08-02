@@ -1,12 +1,12 @@
 pkgname=kde-ssh-agent
 pkgver=1
-pkgrel=1
+pkgrel=2
 pkgdesc="Fedora's ssh-agent systemd user service for KDE sessions"
 arch=(any)
 url="https://src.fedoraproject.org/"
 # https://fedoraproject.org/wiki/Licensing:Main#License_of_Fedora_SPEC_Files
 license=('MIT')
-depends=(openssh systemd)
+depends=(openssh plasma-workspace systemd)
 source=('https://src.fedoraproject.org/rpms/openssh/raw/bdde8987e397b73f9ebe4bc2ed7ada91e270bb03/f/ssh-agent.service'
         'https://src.fedoraproject.org/rpms/plasma-workspace/raw/6e8b3baf55369a0d67d815b6afb00c3dc7d0b8f1/f/ssh-agent.conf'
         'https://src.fedoraproject.org/rpms/kde-settings/raw/4e0b7992d6ac6317975d9321db149eda695c5f0a/f/ssh-agent.sh')
