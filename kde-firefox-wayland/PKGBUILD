@@ -1,5 +1,5 @@
 pkgname=kde-firefox-wayland
-pkgver=1
+pkgver=2
 pkgrel=1
 pkgdesc="Enable Firefox's Wayland support in KDE sessions"
 arch=(any)
@@ -7,7 +7,7 @@ arch=(any)
 license=('MPL')
 depends=(firefox plasma-workspace)
 source=(firefox.sh)
-sha512sums=('ed637dbca13718aa7ebaaafa0d3ffb7aa9926ad8cf1d75301181e45ee2ef28033120f45417874eac9406f01afcca76a9546c547ba73d83e4e7ed65ef7f6f3b08')
+sha512sums=('2d21eed08ceec30e829e0e624a17107b36cc9a696474f4907568fb7c13c9376f4fa28737cbed9db642de02063e686b9ccaf386e838146f1c950a1cbc13e21d4a')
 
 package() {
     install -Dpm644 firefox.sh \
