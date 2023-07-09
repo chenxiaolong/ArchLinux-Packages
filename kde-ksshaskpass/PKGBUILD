@@ -1,0 +1,15 @@
+pkgname=kde-ksshaskpass
+pkgver=1
+pkgrel=1
+pkgdesc="Automatically use ksshaskpass in KDE sessions"
+arch=(any)
+# Same as ksshaskpass
+license=('GPL')
+depends=(ksshaskpass plasma-workspace)
+source=(ksshaskpass.sh)
+b2sums=('2c032cdfbc5558982a7b7a207eb004dd6796f66df0c961d5d690341b5cd2c21309409f59aa77ca02253fd2df7446c78d33c1bf00587facc4c92bcfead6ff36d1')
+
+package() {
+    install -Dpm644 ksshaskpass.sh \
+        "${pkgdir}"/etc/xdg/plasma-workspace/env/ksshaskpass.sh
+}
